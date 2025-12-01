@@ -40,8 +40,8 @@
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/YaenChen/lunar-birthday-converter.git
-cd lunar-birthday-converter
+git clone https://github.com/sgahch/lunar-brithday.git
+cd lunar-birthday
 ```
 
 ### 2. 安装依赖
