@@ -1,0 +1,14 @@
+from datetime import datetime, date
+from lunardate import LunarDate
+
+# 身份证生日（公历）
+birth_greg = date(1990, 8, 20)
+
+for year in range(birth_greg.year, birth_greg.year + 11):
+    try:
+        # 将当年生日的公历转为农历
+        lunar = LunarDate.fromSolarDate(year, birth_greg.month, birth_greg.day)
+        print(f"{year}年公历{birth_greg.month:02d}-{birth_greg.day:02d} → 农历{lunar.cn_year()}年{lunar.cn_month()}月{lunar.cn_day()}")
+    except ValueError:
+        # 极少数日期可能因农历闰月边界异常（如2月29日），可略过或处理
+        print(f"{year}年 {birth_greg.month}-{birth_greg.day} 无法转换为农历（如2月29日等）")
