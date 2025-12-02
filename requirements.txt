@@ -1,0 +1,5 @@
+flask>=2.0.0
+flask-cors>=3.0.0
+lunardate>=0.2.0
+gunicorn>=21.0.0
+

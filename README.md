@@ -57,7 +57,7 @@ python -m venv .venv
 source .venv/bin/activate
 
 # 安装依赖
-pip install flask flask-cors lunardate
+pip install -r requirements.txt
 ```
 
 ### 3. 启动服务
@@ -121,11 +121,12 @@ python lunar.py
 
 ```
 lunar-birthday-converter/
-├── index.html      # 前端页面
-├── app.js          # 前端交互逻辑
-├── lunar.py        # Flask 后端服务
-├── lunar.txt       # 测试脚本示例
-└── README.md       # 项目文档
+├── index.html        # 前端页面
+├── app.js            # 前端交互逻辑
+├── lunar.py          # Flask 后端服务
+├── requirements.txt  # Python 依赖清单
+├── lunar.txt         # 测试脚本示例
+└── README.md         # 项目文档
 ```
 
 ## ⚠️ 注意事项
@@ -176,8 +177,8 @@ sudo python3 -m venv venv
 # 激活虚拟环境
 source venv/bin/activate
 
-# 安装依赖
-pip install flask flask-cors lunardate gunicorn
+# 安装依赖（使用 requirements.txt）
+pip install -r requirements.txt
 ```
 
 ### 4. 创建 Gunicorn 系统服务
