@@ -134,6 +134,201 @@ lunar-birthday-converter/
 - 🔧 默认端口 5000，如被占用可修改 `lunar.py` 中的 `app.run()` 配置
 - ⚡ 如遇极端日期转换失败（如闰月边界），接口会返回错误提示
 
+## 🌐 云服务器部署指南
+
+以下指南适用于 **Ubuntu/Debian** 系统，使用 **Nginx + Gunicorn** 方案进行生产环境部署。
+
+### 1. 服务器环境准备
+
+```bash
+# 更新系统
+sudo apt update && sudo apt upgrade -y
+
+# 安装必要软件
+sudo apt install -y python3 python3-pip python3-venv nginx git
+```
+
+### 2. 部署项目文件
+
+```bash
+# 创建项目目录
+sudo mkdir -p /var/www/lunar-birthday
+cd /var/www/lunar-birthday
+
+# 方式一：从 GitHub 克隆
+sudo git clone https://github.com/sgahch/lunar-brithday.git .
+
+# 方式二：手动上传（使用 scp）
+# 在本地执行：scp -r ./* user@your-server-ip:/var/www/lunar-birthday/
+
+# 设置目录权限
+sudo chown -R www-data:www-data /var/www/lunar-birthday
+```
+
+### 3. 配置 Python 虚拟环境
+
+```bash
+cd /var/www/lunar-birthday
+
+# 创建虚拟环境
+sudo python3 -m venv venv
+
+# 激活虚拟环境
+source venv/bin/activate
+
+# 安装依赖
+pip install flask flask-cors lunardate gunicorn
+```
+
+### 4. 创建 Gunicorn 系统服务
+
+```bash
+# 创建 systemd 服务文件
+sudo nano /etc/systemd/system/lunar-birthday.service
+```
+
+粘贴以下内容：
+
+```ini
+[Unit]
+Description=Lunar Birthday Converter - Gunicorn Service
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/lunar-birthday
+Environment="PATH=/var/www/lunar-birthday/venv/bin"
+ExecStart=/var/www/lunar-birthday/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5000 lunar:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+启动服务：
+
+```bash
+# 重新加载 systemd 配置
+sudo systemctl daemon-reload
+
+# 启动服务
+sudo systemctl start lunar-birthday
+
+# 设置开机自启
+sudo systemctl enable lunar-birthday
+
+# 查看服务状态
+sudo systemctl status lunar-birthday
+```
+
+### 5. 配置 Nginx 反向代理
+
+```bash
+# 创建 Nginx 配置文件
+sudo nano /etc/nginx/sites-available/lunar-birthday
+```
+
+粘贴以下内容（请将 `your-domain.com` 替换为你的域名或服务器IP）：
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;  # 替换为你的域名或 IP
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # 静态文件缓存优化
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+        proxy_pass http://127.0.0.1:5000;
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+启用配置：
+
+```bash
+# 创建软链接启用站点
+sudo ln -s /etc/nginx/sites-available/lunar-birthday /etc/nginx/sites-enabled/
+
+# 测试 Nginx 配置
+sudo nginx -t
+
+# 重启 Nginx
+sudo systemctl restart nginx
+```
+
+### 6. 配置防火墙（可选）
+
+```bash
+# 允许 HTTP 和 HTTPS 流量
+sudo ufw allow 'Nginx Full'
+sudo ufw enable
+sudo ufw status
+```
+
+### 7. 配置 HTTPS（推荐）
+
+使用 Let's Encrypt 免费证书：
+
+```bash
+# 安装 Certbot
+sudo apt install -y certbot python3-certbot-nginx
+
+# 获取并配置证书（替换为你的域名）
+sudo certbot --nginx -d your-domain.com
+
+# 证书会自动续期，可手动测试续期
+sudo certbot renew --dry-run
+```
+
+### 8. 常用运维命令
+
+```bash
+# 查看服务状态
+sudo systemctl status lunar-birthday
+
+# 重启服务
+sudo systemctl restart lunar-birthday
+
+# 查看服务日志
+sudo journalctl -u lunar-birthday -f
+
+# 重启 Nginx
+sudo systemctl restart nginx
+
+# 查看 Nginx 错误日志
+sudo tail -f /var/log/nginx/error.log
+```
+
+### 9. 部署验证
+
+部署完成后，访问以下地址验证：
+
+- **主页**：`http://your-domain.com`
+- **API 测试**：`http://your-domain.com/api/test`
+
+如果看到 `{"status": "ok", "message": "农历生日转换器API正常运行"}`，说明部署成功！
+
+### 📋 部署清单速查
+
+| 步骤 | 命令 |
+| :--- | :--- |
+| 启动服务 | `sudo systemctl start lunar-birthday` |
+| 停止服务 | `sudo systemctl stop lunar-birthday` |
+| 重启服务 | `sudo systemctl restart lunar-birthday` |
+| 查看日志 | `sudo journalctl -u lunar-birthday -f` |
+| 重启 Nginx | `sudo systemctl restart nginx` |
+
 ## 📄 开源许可
 
 本项目采用 [MIT License](./LICENSE) 开源许可证。
